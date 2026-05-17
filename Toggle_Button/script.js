@@ -1,41 +1,56 @@
-let body = document.querySelector("body");
+let a = document.querySelector("body");
 let btn = document.querySelector(".btn");
-let icon = document.querySelector(".btn-icon");
+let icon = document.querySelector(".icon_container i");
 
-function store(value){
-    localStorage.setItem("darkmode",value);
+function store(value) {
+    localStorage.setItem("darkmode", value);
 }
 
-function load (){
+function load() {
     let darkmode = localStorage.getItem("darkmode");
-    if(!darkmode){
-        store(false);
+    if (!darkmode) {
+        store(false); // first visit — default to light mode
     }
-    else if (darkmode == "true") {
-        body.classList.add("darkmode");
+    else if (darkmode === "true") {
+        a.classList.add("darkmode");     // Bug 1 fixed: was icon, should be a (body)
+        icon.classList.remove("fa-sun"); // Bug 2 fixed: remove fa-sun before adding fa-moon
         icon.classList.add("fa-moon");
-    } 
-    else if (darkmode == "false"){
-        icon.classList.add("fa-sun");
     }
-}load();
+    // "false" branch removed — fa-sun is already on icon from HTML, nothing to do
+}
 
-btn.addEventListener("click", () => {
-    body.classList.toggle("darkmode");
-    icon.classList.add("animate");
-    store(body.classList.contains("darkmode"));
+function main() {
+    btn.addEventListener("click", () => {
+        a.classList.toggle("darkmode");
 
-    if (body.classList.contains("darkmode")) {
-        icon.classList.remove("fa-sun");
-        icon.classList.add("fa-moon");
-
-    }
-    else {
-        icon.classList.add("fa-sun");
-        icon.classList.remove("fa-moon");
-    }
-    setTimeout(() => {
+        // Force reflow so animation always restarts on every click
         icon.classList.remove("animate");
-    }, 500)
+        void icon.offsetWidth;
+        icon.classList.add("animate");
 
-})
+        store(a.classList.contains("darkmode"));
+
+        if (a.classList.contains("darkmode")) {
+            icon.classList.remove("fa-sun");
+            icon.classList.add("fa-moon");
+        } else {
+            icon.classList.remove("fa-moon");
+            icon.classList.add("fa-sun");
+        }
+
+        setTimeout(() => {
+            icon.classList.remove("animate");
+        }, 500);
+    });
+}
+
+// Disable transitions → restore state → re-enable transitions after first paint
+document.body.classList.add("no-transition");
+load();
+requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+        document.body.classList.remove("no-transition");
+    });
+});
+
+main();  // attach click listener
